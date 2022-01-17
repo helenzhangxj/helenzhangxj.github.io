@@ -15,5 +15,6 @@ knitr::opts_chunk$set(collapse = TRUE)
 
 # Deploy blogdown in github page  
 see links[https://www.r-bloggers.com/2018/02/r-blogdown-setup-in-github-2/]  
-add publishDir = 'docs'
+add publishDir = 'docs'  
+testing if docs folder is updated
 

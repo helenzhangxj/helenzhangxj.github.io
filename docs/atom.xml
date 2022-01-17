@@ -4,7 +4,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
     <title type="text">Helen Zhang</title>
     <subtitle type="html">MemE is a powerful and highly customizable GoHugo theme for personal blogs.</subtitle>
-    <updated>2022-01-17T15:45:40&#43;13:00</updated>
+    <updated>2022-01-17T16:01:45&#43;13:00</updated>
     <id>/</id>
     <link rel="alternate" type="text/html" href="/" />
     <link rel="self" type="application/atom&#43;xml" href="/atom.xml" />
@@ -16,6 +16,62 @@
             </author>
     <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en)</rights>
     <generator uri="https://gohugo.io/" version="0.89.4">Hugo</generator>
+        <entry>
+            <title type="text">Deploy blogdown in github page</title>
+            <link rel="alternate" type="text/html" href="/post/deploy-blogdown-in-github-page/" />
+            <id>/post/deploy-blogdown-in-github-page/</id>
+            <updated>2022-01-17T15:46:10&#43;13:00</updated>
+            <published>2022-01-17T00:00:00&#43;00:00</published>
+            <author>
+                    <name>Helen Zhang</name>
+                    <uri>https://helenzhangxj.github.io</uri>
+                    <email>helen.zhangxj@gmail.com</email>
+                    </author>
+            <rights>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en)</rights><summary type="html">Deploy blogdown in github pagesee links[https://www.r-bloggers.com/2018/02/r-blogdown-setup-in-github-2/]
+add publishDir = ‘docs’
+</summary>
+            
+                <content type="html">
+&lt;script src=&#34;/post/deploy-blogdown-in-github-page/index_files/header-attrs/header-attrs.js&#34;&gt;&lt;/script&gt;
+
+
+&lt;div id=&#34;deploy-blogdown-in-github-page&#34; class=&#34;section level1&#34;&gt;
+&lt;h1&gt;Deploy blogdown in github page&lt;/h1&gt;
+&lt;p&gt;see links[&lt;a href=&#34;https://www.r-bloggers.com/2018/02/r-blogdown-setup-in-github-2/&#34; class=&#34;uri&#34;&gt;https://www.r-bloggers.com/2018/02/r-blogdown-setup-in-github-2/&lt;/a&gt;]&lt;br /&gt;
+add publishDir = ‘docs’&lt;/p&gt;
+&lt;/div&gt;
+</content>
+            
+            
+            
+            
+            
+                
+                    
+                
+                    
+                        
+                            
+                            
+                            
+                                <category scheme="/categories/r/" term="R" label="R" />
+                            
+                        
+                    
+                
+                    
+                        
+                            
+                            
+                            
+                                <category scheme="/tags/blogdown/" term="blogdown" label="blogdown" />
+                            
+                        
+                    
+                
+            
+        </entry>
+    
         <entry>
             <title type="text">Hello R Markdown</title>
             <link rel="alternate" type="text/html" href="/post/2020-12-01-r-rmarkdown/" />
