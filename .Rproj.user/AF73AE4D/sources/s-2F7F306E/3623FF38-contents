@@ -1,0 +1,19 @@
+---
+title: Deploy blogdown in github page
+author: Helen Zhang
+date: '2022-01-17'
+slug: deploy-blogdown-in-github-page
+categories:
+  - R
+tags:
+  - blogdown
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+
+# Deploy blogdown in github page  
+see links[https://www.r-bloggers.com/2018/02/r-blogdown-setup-in-github-2/]  
+add publishDir = 'docs'
+
