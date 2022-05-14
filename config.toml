@@ -106,7 +106,7 @@ uglyURLs = false
     # Email
     email = "helen.zhangxj@gmail.com"
     # Motto or introduction
-    motto = "simplicity is the ultimate sophistication"
+    motto = "Simplicity is the ultimate sophistication"
     # Avatar
     avatar = "/icons/apple-touch-icon.png"
     # Personal website, default: baseURL
@@ -365,7 +365,7 @@ uglyURLs = false
     # ATTENTION: keep this format, change
     #            the number
 
-    siteTwitter = "@marz_nana"
+    # siteTwitter = "@marz_nana"
     # Note: used for Twitter Cards
 
 
@@ -585,7 +585,7 @@ uglyURLs = false
 
     jsonLD = true
     openGraph = true
-    twitterCards = true
+    twitterCards = false
     # ATTENTION: If you set twitterCards
     #            to `true`, be sure to
     #            enable openGraph also.
