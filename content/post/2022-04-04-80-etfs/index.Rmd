@@ -1,0 +1,411 @@
+---
+title: "80 ETFs"
+author: "Helen Zhang"
+date: '2022-04-04'
+slug: 80-etfs
+categories: R
+tags: blogdown
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(collapse = TRUE)
+
+```
+
+# 80 ETFs  
+
+```{r, include=FALSE}
+
+library(googledrive)
+library(gargle)
+library(googlesheets4)
+library(tidyquant)
+library(RcppRoll)
+
+library(ggforce)
+library(stringr)
+library(jsonlite)
+library(httr)
+library(janitor)
+library(magrittr)
+library(odbc)
+library(DBI)
+library(dplyr)
+library(tidyr)
+library(magrittr)
+library(lubridate)
+library(scales)
+library(forcats)
+library(tidytext)
+library(DT)
+library(MetBrewer)
+
+library(zoo)
+
+con <- dbConnect(odbc(),
+                 Driver   = "SQL Server",
+                 Server   = "DESKTOP-7R9Q7GH\\DBDATAWAREHOUSE",
+                 Database = "DB001",
+                 Trusted_Connection = "True")
+
+gs4_auth(path = 'D:\\MyTickerDaily\\gettickerdaily-61582555722a.json')
+
+# op <- options(gargle_verbosity = "debug")
+
+```
+
+
+
+```{r}
+
+ticker_other <- c("DBA",	"WEAT",	"RJA",	"CORN",	"FAAR",	"SOYB",	"JJG",	"TAGS",	"JJA",	"GRU",	"XLE",	"VDE",	"AMLP",	"ICLN",	"XOP",	"OIH",	"IYE",	"TAN",	"AMJ",	"EMLP",	"QCLN",	"IXC",	"FXN",	"FENY",	"PBW",	"MLPA",	"FTXN",	"GUSH",	"MLPX",	"ACES",	"IEO",	"FCG",	"RYE",	"TPYP",	"ERTH",	"XES",	"FAN",	"AMZA",	"PXI",	"PBD",	"CNRG",	"IEZ",	"SMOG",	"PXE",	"MLPB",	"DIG",	"ATMP",	"PSCE",	"RNRG",	"CTEC",	"FILL",	"ENFR",	"AMUB",	"AMNA",	"PXJ",	"AMTR",	"NLR",	"AMND",	"USAI",	"JHME",	"DUG",	"EINC",	"MLPO",	"PYPE",	"KWT",	"CRAK",	"IMLP",	"BNE",	"CHIE",	"DDG",	"BSEA",	"SHFT",	"CLMA",	"ERUS",	"MOO",	"VEGI",	"FTAG",	"DBE")
+
+symbol_load <-  data.frame(symbol = ticker_other) %>% 
+  left_join(dbGetQuery(con, ("select * from db001.load.symbol_name")) %>%
+  select(symbol, company_name, market_cap, beta, price, last_annual_dividend, exchange_short_name, country), 
+  by = 'symbol')%>%
+  mutate(symbol_name = paste0(symbol,'_',company_name), rowid = row_number()) %>%
+  mutate(row_group = as.factor(rowid%%3)) %>%
+  group_by(row_group) %>%
+  mutate(rowid = as.factor(row_number())) %>%
+  ungroup()
+
+symbol_load %>% 
+  filter(!is.na(market_cap)) %>%
+  arrange(desc(market_cap))
+  
+```
+
+
+```{r}
+
+
+ticker_other_df <- read_sheet('1B937H36e3Er0ten8fZ-cZ51-eA5881U9RWO41MNYuiA', 
+                              sheet = 'ticker_other') %>%
+  transmute(symbol = Symbol, 
+            date = as.Date(Date),
+            open = Open,
+            high = High,
+            low = Low,
+            close = Close,
+            volume = Volume) %>%
+  inner_join(symbol_load, by = c('symbol'))
+
+ticker_other_annual_return <- ticker_other_df %>%
+  group_by(symbol) %>%
+  tq_transmute(select = close, 
+                 mutate_fun = periodReturn, 
+                 period = "yearly", 
+                 type = "arithmetic", 
+               col_rename = 'return_annual')
+
+ticker_other_annual_return
+
+ticker_other_monthly_return <- ticker_other_df %>%
+  group_by(symbol) %>%
+  tq_transmute(select = close, 
+                 mutate_fun = periodReturn, 
+                 period = "monthly", 
+                 type = "arithmetic", 
+               col_rename = 'return_monthly')
+
+ticker_other_monthly_return
+
+```
+
+
+```{r}
+
+spy_df <- dbReadTable(con, ("FactTickerPriceDaily")) %>% 
+  distinct() %>%
+  filter(symbol == 'SPY') %>%
+  transmute(symbol, 
+            date = ymd(date, tz = 'America/New_york'),
+            open = round(as.numeric(open),2),
+            close = round(as.numeric(close),2),
+            high = round(as.numeric(high),2),
+            low = round(as.numeric(low),2),
+            volume = as.numeric(volume)) %>%
+  arrange(symbol, date)
+
+```
+
+
+
+```{r}
+
+spy_annual_return <- spy_df %>%
+  group_by(symbol) %>%
+  tq_transmute(select = close, 
+                 mutate_fun = periodReturn, 
+                 period = "yearly", 
+                 type = "arithmetic", 
+               col_rename = 'spy_return_annual')
+
+
+spy_annual_return
+
+spy_monthly_return <- spy_df %>%
+  group_by(symbol) %>%
+  tq_transmute(select = close, 
+                 mutate_fun = periodReturn, 
+                 period = "monthly", 
+                 type = "arithmetic", 
+               col_rename = 'spy_return_monthly')
+
+spy_monthly_return
+
+```
+
+
+```{r}
+
+ticker_other_stat <- ticker_other_annual_return %>%
+  summarise(return_annual_mean = mean(return_annual), 
+         return_annual_sd = sd(return_annual), 
+         return_annual_median = median(return_annual)) %>%
+  ungroup()
+
+```
+
+
+```{r fig.width=10}
+
+ticker_other_annual_return %>% 
+  inner_join(ticker_other_stat, by = 'symbol') %>%
+  mutate(return_annual = case_when(return_annual > 3*return_annual_sd ~ 3*return_annual_sd,
+                                   return_annual < -3*return_annual_sd ~  -3*return_annual_sd,
+                                   TRUE ~ return_annual)) %>%
+  inner_join(symbol_load %>% select(symbol, company_name, rowid, row_group), 
+            by = 'symbol') %>%
+  mutate(symbol_name = paste0(symbol, '_', company_name)) %>%
+  filter(symbol %in% ticker_pick_a & row_group == 2) %>%
+  
+  ggplot(aes(x=fct_reorder(symbol_name, return_annual, .fun = median), y = return_annual)) +
+  geom_boxplot() +
+  # coord_flip() +
+  scale_y_continuous(labels = scales::percent) +
+  geom_hline(yintercept = 0, linetype = 2, colour = "red") +
+  # facet_grid(rows = vars(row_group)) +
+  theme_classic() +
+  theme(axis.text.x = element_text(size = 7, angle = 30, vjust = 0.5, hjust=0.5))
+
+```
+
+```{r}
+
+ticker_pick_a <- ticker_other_annual_return %>%
+  summarise(return_annual_median = median(return_annual)) %>%
+  filter(return_annual_median >0) %>%
+  pull(symbol) 
+
+```
+
+
+
+
+```{r fig.width=10}
+
+
+for (n in c(1:5)){
+  g2 <-
+  ticker_other_annual_return %>% 
+    inner_join(ticker_other_stat, by = 'symbol') %>%
+    mutate(return_annual = case_when(return_annual > 2*return_annual_sd ~ 2*return_annual_sd,
+                                     return_annual < -2*return_annual_sd ~  -2*return_annual_sd, 
+                                     TRUE ~ return_annual)) %>%
+    inner_join(symbol_load %>% select(symbol, company_name, rowid, row_group), 
+              by = 'symbol') %>%
+    mutate(symbol_name = paste0(symbol, '_', company_name)) %>%
+    
+    ggplot(aes(x = return_annual)) +
+    geom_density() +
+    geom_vline(xintercept = 0, linetype = 2, color = 2) +
+    facet_wrap_paginate(~ symbol_name, ncol = 4, nrow = 4, page = n, scales = 'free_y') +
+    theme_classic() +
+    theme(strip.text = element_text(size = 8, hjust = 0.030))
+  
+  print(g2)
+}
+
+```
+
+
+
+```{r fig.width=10}
+
+ticker_other_annual_return %>% 
+    inner_join(ticker_other_stat, by = 'symbol') %>%
+    mutate(return_annual = case_when(return_annual > 2*return_annual_sd ~ 2*return_annual_sd,
+                                     return_annual < -2*return_annual_sd ~  -2*return_annual_sd, 
+                                     TRUE ~ return_annual)) %>%
+    inner_join(symbol_load %>% select(symbol, company_name, rowid, row_group), 
+              by = 'symbol') %>%
+    mutate(symbol_name = paste0(symbol, '_', company_name)) %>% 
+  ggplot(aes(x=fct_reorder(symbol, return_annual, .fun = median), y = return_annual)) +
+  geom_boxplot() +
+  geom_hline(yintercept = mean(spy_annual_return$spy_return_annual), linetype = 2, color = 'red') +
+  scale_y_continuous(labels = scales::percent)
+  
+
+```
+market cap, mean annual return, median annual return, dividend
+
+MOO, JJA, XLE, DBE
+
+
+```{r fig.height=}
+
+ticker_other_stat %>% 
+  filter(symbol %in% c('MOO', 'JJA', 'XLE', 'DBE')) %>%
+  # filter(return_annual_mean>0 | return_annual_median >0) %>%
+  # filter(row_group == 0) %>%
+  
+  select(-return_annual_sd) %>%
+  inner_join(symbol_load %>% 
+               transmute(symbol, company_name, a_market_cap = market_cap, 
+                         b_last_annual_dividend = last_annual_dividend, 
+                         rowid, 
+                         row_group), 
+            by = 'symbol') %>%
+  mutate(symbol_name = paste0(symbol, '_', company_name)) %>%
+  pivot_longer(cols = c(starts_with('return'), 'a_market_cap','b_last_annual_dividend'), names_to = 'item') %>%
+  
+  group_by(item) %>%
+  arrange(desc(value)) %>%
+  ungroup() %>%
+  mutate(n = row_number(), 
+         item = as.factor(item)) %>%
+  mutate(symbol_name = reorder_within(symbol_name, by = n, within = item)) %>%
+  
+  ggplot(aes(x= fct_reorder(symbol_name, desc(n)), y = value)) +
+  geom_bar(stat = 'identity') +
+  scale_y_continuous(labels = scales::label_number_si(accuracy = 0.01)) +
+  coord_flip() +
+  scale_x_reordered() +
+  facet_wrap(~item, scales = 'free') +
+  
+  labs(y = NULL,
+         x = 'symbol_name',
+         title = "over 5 years")
+
+```
+
+
+```{r}
+
+```
+
+
+
+```{r}
+
+symbol_load %>% 
+  filter(!is.na(market_cap)) %>%
+  arrange(desc(market_cap)) %>%
+  
+  head(20) %>%
+  ggplot(aes(x=symbol_name %>% fct_reorder(market_cap), y=market_cap)) + 
+  geom_bar(stat = 'identity') +
+  scale_y_continuous(labels = scales::label_number_si()) +
+  coord_flip() +
+  theme_bw()
+
+```
+
+```{r}
+
+ticker_other_annual_return %>% 
+    inner_join(ticker_other_stat, by = 'symbol') %>%
+    mutate(return_annual = case_when(return_annual > 2*return_annual_sd ~ 2*return_annual_sd,
+                                     return_annual < -2*return_annual_sd ~  -2*return_annual_sd, 
+                                     TRUE ~ return_annual)) %>%
+  group_by(symbol) %>%
+  summarise(annual_avg = mean(return_annual), 
+            annual_median = median(return_annual)) %>%
+  ungroup() %>%
+  inner_join(symbol_load %>% select(symbol, symbol_name, rowid, row_group), 
+              by = 'symbol') %>%
+  
+  arrange(desc(annual_avg)) %>%
+  head(20) %>%
+  ggplot(aes(x=symbol_name %>% fct_reorder(annual_avg), y=annual_avg)) + 
+  geom_bar(stat = 'identity') +
+  geom_hline(yintercept = mean(spy_annual_return$spy_return_annual), linetype = 2, color = 'red') +
+  scale_y_continuous(labels = scales::label_percent()) +
+  coord_flip() +
+  theme_bw()
+
+
+```
+
+```{r}
+
+ticker_other_annual_return %>% 
+    inner_join(ticker_other_stat, by = 'symbol') %>%
+    mutate(return_annual = case_when(return_annual > 2*return_annual_sd ~ 2*return_annual_sd,
+                                     return_annual < -2*return_annual_sd ~  -2*return_annual_sd, 
+                                     TRUE ~ return_annual)) %>%
+  group_by(symbol) %>%
+  summarise(annual_avg = mean(return_annual), 
+            annual_median = median(return_annual)) %>%
+  ungroup() %>%
+  inner_join(symbol_load %>% select(symbol, symbol_name, rowid, row_group), 
+              by = 'symbol') %>%
+  
+  arrange(desc(annual_median)) %>%
+  head(20) %>%
+  ggplot(aes(x=symbol_name %>% fct_reorder(annual_median), y=annual_median)) + 
+  geom_bar(stat = 'identity') +
+  geom_hline(yintercept = median(spy_annual_return$spy_return_annual), linetype = 2, color = 'red') +
+  scale_y_continuous(labels = scales::label_percent()) +
+  coord_flip() +
+  theme_bw()
+
+```
+
+
+```{r fig.width=10}
+
+for (n in c(1:5)){
+g3 <-
+ticker_other_annual_return %>% 
+    inner_join(ticker_other_stat, by = 'symbol') %>%
+    mutate(return_annual = case_when(return_annual > 2*return_annual_sd ~ 2*return_annual_sd,
+                                     return_annual < -2*return_annual_sd ~  -2*return_annual_sd, 
+                                     TRUE ~ return_annual)) %>%
+  left_join(spy_annual_return %>% ungroup() %>% select(-symbol), by = 'date') %>%
+    inner_join(symbol_load %>% select(symbol, company_name, rowid, row_group), 
+              by = 'symbol') %>%
+    mutate(symbol_name = paste0(symbol, '_', company_name)) %>%
+  
+  ggplot() +
+  # geom_bar(stat = 'identity') +
+  geom_line(aes(x = date, y = return_annual)) +
+  geom_line(aes(x= date, y = spy_return_annual), color = 'orange') +
+  scale_y_continuous(labels = scales::percent) +
+  facet_wrap_paginate(~ symbol_name, ncol = 4, nrow = 4, page = n, scales = 'free_y') +
+  theme_classic() +
+  theme(strip.text = element_text(size = 8, hjust = 0.030))
+
+print(g3)
+}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

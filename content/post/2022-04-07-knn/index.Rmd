@@ -1,0 +1,168 @@
+---
+title: knn
+author: Helen Zhang
+date: '2022-04-07'
+slug: knn
+categories:
+  - R
+tags:
+  - ml
+---
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(collapse = TRUE)
+
+```
+
+# knn
+
+```{r, include=FALSE}
+
+library(googledrive)
+library(gargle)
+library(googlesheets4)
+library(tidyquant)
+library(RcppRoll)
+
+library(ggforce)
+library(stringr)
+library(jsonlite)
+library(httr)
+library(janitor)
+library(magrittr)
+library(odbc)
+library(DBI)
+library(dplyr)
+library(tidyr)
+library(magrittr)
+library(lubridate)
+library(scales)
+library(forcats)
+library(tidytext)
+library(DT)
+library(MetBrewer)
+
+library(tidymodels)
+
+library(zoo)
+
+
+gs4_auth(path = 'D:\\MyTickerDaily\\gettickerdaily-61582555722a.json')
+
+# op <- options(gargle_verbosity = "debug")
+
+```
+
+
+```{r}
+
+rav_df <- read_sheet('1H6-SnFLncXI7yDimIFWDrFHZhDy9pCjNHXKasBAZSSU', sheet = 'Sheet1') 
+
+```
+
+
+initial split
+
+```{r}
+
+set.seed(46)
+
+train_test_split <- initial_split(rav_df %>% 
+                                    transmute(target = jde_item_category_02_code, 
+                                              imsrp1, imsrp3, imsrp4))
+
+train <- training(train_test_split)
+
+test <- testing(train_test_split)
+
+```
+
+
+```{r}
+
+library(skimr)
+skim(train)
+
+```
+
+
+```{r}
+
+train_rec <- recipe(target ~., data = train) %>%
+  step_mutate(imsrp1 = ifelse(is.na(imsrp1),'nan',imsrp1) %>% as.factor(), 
+              imsrp4 = ifelse(is.na(imsrp4),'nan',imsrp4) %>% as.factor()) %>%
+  step_dummy(all_predictors()) %>%
+  step_pca(all_predictors())
+
+train_prep <- train_rec %>% prep() %>% bake(new_data = NULL)
+
+```
+
+```{r}
+
+train_prep %>% 
+  mutate(target = as.factor(target)) %>%
+  ggplot(aes(x= PC1, y = PC2, color = target)) +
+  geom_point()
+
+```
+
+
+```{r}
+
+
+train_rec <- recipe(price ~., data = train) %>%
+  update_role(id, new_role = 'id') %>%
+  # step_tokenize(name) %>%
+  # step_tokenfilter(name, max_tokens = 20) %>%
+  # step_tf(name) %>%
+  step_mutate(last_review = ifelse(is.na(last_review), median(train$last_review, na.rm = TRUE), last_review)) %>%
+  step_mutate(last_review = as.Date(last_review, origin = '1970-01-01'), 
+              availability_365 = availability_365/365) %>%
+  step_date(last_review) %>%
+  step_mutate(reviews_per_month = ifelse(is.na(reviews_per_month),0, reviews_per_month)) %>%
+  step_rm(host_id, host_name, neighbourhood, name) %>%
+  step_string2factor(neighbourhood_group, room_type)
+
+train_prep <- train_rec %>% prep() %>% bake(new_data = NULL)
+
+
+skim(train_prep)
+
+
+# View(train)
+
+# train %>% unnest_tokens(word, name) %>%
+#   select(id, word)
+# 
+# text_df %>%
+#   unnest_tokens(word, text)
+
+
+```
+
+train folds
+
+```{r}
+
+set.seed(482)
+
+train_folds <- vfold_cv(train, v = 5)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
