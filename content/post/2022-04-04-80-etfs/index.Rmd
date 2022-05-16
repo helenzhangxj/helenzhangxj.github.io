@@ -121,7 +121,7 @@ spy_df <- dbReadTable(con, ("FactTickerPriceDaily")) %>%
   distinct() %>%
   filter(symbol == 'SPY') %>%
   transmute(symbol, 
-            date = ymd(date, tz = 'America/New_york'),
+            date = ymd(as.Date(date), tz = 'America/New_york'),
             open = round(as.numeric(open),2),
             close = round(as.numeric(close),2),
             high = round(as.numeric(high),2),
@@ -170,6 +170,16 @@ ticker_other_stat <- ticker_other_annual_return %>%
 ```
 
 
+```{r}
+
+ticker_pick_a <- ticker_other_annual_return %>%
+  summarise(return_annual_median = median(return_annual)) %>%
+  filter(return_annual_median >0) %>%
+  pull(symbol) 
+
+```
+
+
 ```{r fig.width=10}
 
 ticker_other_annual_return %>% 
@@ -192,17 +202,6 @@ ticker_other_annual_return %>%
   theme(axis.text.x = element_text(size = 7, angle = 30, vjust = 0.5, hjust=0.5))
 
 ```
-
-```{r}
-
-ticker_pick_a <- ticker_other_annual_return %>%
-  summarise(return_annual_median = median(return_annual)) %>%
-  filter(return_annual_median >0) %>%
-  pull(symbol) 
-
-```
-
-
 
 
 ```{r fig.width=10}
@@ -255,7 +254,7 @@ market cap, mean annual return, median annual return, dividend
 MOO, JJA, XLE, DBE
 
 
-```{r fig.height=}
+```{r}
 
 ticker_other_stat %>% 
   filter(symbol %in% c('MOO', 'JJA', 'XLE', 'DBE')) %>%

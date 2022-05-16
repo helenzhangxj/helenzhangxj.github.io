@@ -651,7 +651,7 @@ uglyURLs = false
     # Note: render only in production
     #       environment
 
-    enableComments = false
+    enableComments = true
     # Note: *global settings*
     #       `comments` in post’s Front Matter
     #       has a higher priority than here
@@ -1020,7 +1020,7 @@ uglyURLs = false
     ######################################
     ## Font Size (unit: px)
 
-    fontSize = 18
+    fontSize = 16
 
     ######################################
     ## Tab Size

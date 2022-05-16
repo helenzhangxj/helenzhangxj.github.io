@@ -1,0 +1,364 @@
+---
+title: "80 ETFs"
+author: "Helen Zhang"
+date: '2022-04-04'
+slug: 80-etfs
+categories: R
+tags: blogdown
+---
+
+
+
+<div id="etfs" class="section level1">
+<h1>80 ETFs</h1>
+<pre class="r"><code>
+ticker_other &lt;- c(&quot;DBA&quot;,    &quot;WEAT&quot;, &quot;RJA&quot;,  &quot;CORN&quot;, &quot;FAAR&quot;, &quot;SOYB&quot;, &quot;JJG&quot;,  &quot;TAGS&quot;, &quot;JJA&quot;,  &quot;GRU&quot;,  &quot;XLE&quot;,  &quot;VDE&quot;,  &quot;AMLP&quot;, &quot;ICLN&quot;, &quot;XOP&quot;,  &quot;OIH&quot;,  &quot;IYE&quot;,  &quot;TAN&quot;,  &quot;AMJ&quot;,  &quot;EMLP&quot;, &quot;QCLN&quot;, &quot;IXC&quot;,  &quot;FXN&quot;,  &quot;FENY&quot;, &quot;PBW&quot;,  &quot;MLPA&quot;, &quot;FTXN&quot;, &quot;GUSH&quot;, &quot;MLPX&quot;, &quot;ACES&quot;, &quot;IEO&quot;,  &quot;FCG&quot;,  &quot;RYE&quot;,  &quot;TPYP&quot;, &quot;ERTH&quot;, &quot;XES&quot;,  &quot;FAN&quot;,  &quot;AMZA&quot;, &quot;PXI&quot;,  &quot;PBD&quot;,  &quot;CNRG&quot;, &quot;IEZ&quot;,  &quot;SMOG&quot;, &quot;PXE&quot;,  &quot;MLPB&quot;, &quot;DIG&quot;,  &quot;ATMP&quot;, &quot;PSCE&quot;, &quot;RNRG&quot;, &quot;CTEC&quot;, &quot;FILL&quot;, &quot;ENFR&quot;, &quot;AMUB&quot;, &quot;AMNA&quot;, &quot;PXJ&quot;,  &quot;AMTR&quot;, &quot;NLR&quot;,  &quot;AMND&quot;, &quot;USAI&quot;, &quot;JHME&quot;, &quot;DUG&quot;,  &quot;EINC&quot;, &quot;MLPO&quot;, &quot;PYPE&quot;, &quot;KWT&quot;,  &quot;CRAK&quot;, &quot;IMLP&quot;, &quot;BNE&quot;,  &quot;CHIE&quot;, &quot;DDG&quot;,  &quot;BSEA&quot;, &quot;SHFT&quot;, &quot;CLMA&quot;, &quot;ERUS&quot;, &quot;MOO&quot;,  &quot;VEGI&quot;, &quot;FTAG&quot;, &quot;DBE&quot;)
+
+symbol_load &lt;-  data.frame(symbol = ticker_other) %&gt;% 
+  left_join(dbGetQuery(con, (&quot;select * from db001.load.symbol_name&quot;)) %&gt;%
+  select(symbol, company_name, market_cap, beta, price, last_annual_dividend, exchange_short_name, country), 
+  by = &#39;symbol&#39;)%&gt;%
+  mutate(symbol_name = paste0(symbol,&#39;_&#39;,company_name), rowid = row_number()) %&gt;%
+  mutate(row_group = as.factor(rowid%%3)) %&gt;%
+  group_by(row_group) %&gt;%
+  mutate(rowid = as.factor(row_number())) %&gt;%
+  ungroup()
+
+symbol_load %&gt;% 
+  filter(!is.na(market_cap)) %&gt;%
+  arrange(desc(market_cap))
+## # A tibble: 72 × 11
+##    symbol company_name  market_cap  beta price last_annual_div… exchange_short_…
+##    &lt;chr&gt;  &lt;chr&gt;              &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;            &lt;dbl&gt; &lt;chr&gt;           
+##  1 JJA    iPath Series…    2.76e10     0  24.5            0     AMEX            
+##  2 ATMP   Barclays ETN…    2.08e10     0  17.8            0.915 AMEX            
+##  3 GUSH   Direxion Dai…    1.58e10     0 113.             0.066 AMEX            
+##  4 XLE    Energy Selec…    1.28e10     0  68.8            2.34  AMEX            
+##  5 TAGS   Teucrium Agr…    1.09e10     0  28.6            0     AMEX            
+##  6 AMLP   Alerian MLP …    9.26e 9     0  38.2            2.8   AMEX            
+##  7 XOP    SPDR S&amp;P Oil…    7.75e 9     0 110.             1.54  AMEX            
+##  8 VDE    Vanguard Ene…    3.97e 9     0  95.0            3.21  AMEX            
+##  9 AMJ    JPMorgan Ale…    3.07e 9     0  20.7            1.30  AMEX            
+## 10 EMLP   First Trust …    2.45e 9     0  25.8            0.821 AMEX            
+## # … with 62 more rows, and 4 more variables: country &lt;chr&gt;, symbol_name &lt;chr&gt;,
+## #   rowid &lt;fct&gt;, row_group &lt;fct&gt;</code></pre>
+<pre class="r"><code>
+
+ticker_other_df &lt;- read_sheet(&#39;1B937H36e3Er0ten8fZ-cZ51-eA5881U9RWO41MNYuiA&#39;, 
+                              sheet = &#39;ticker_other&#39;) %&gt;%
+  transmute(symbol = Symbol, 
+            date = as.Date(Date),
+            open = Open,
+            high = High,
+            low = Low,
+            close = Close,
+            volume = Volume) %&gt;%
+  inner_join(symbol_load, by = c(&#39;symbol&#39;))
+## ✔ Reading from &quot;MyTickerDailyLoad&quot;.
+## ✔ Range &#39;&#39;ticker_other&#39;&#39;.
+
+ticker_other_annual_return &lt;- ticker_other_df %&gt;%
+  group_by(symbol) %&gt;%
+  tq_transmute(select = close, 
+                 mutate_fun = periodReturn, 
+                 period = &quot;yearly&quot;, 
+                 type = &quot;arithmetic&quot;, 
+               col_rename = &#39;return_annual&#39;)
+
+ticker_other_annual_return
+## # A tibble: 555 × 3
+## # Groups:   symbol [78]
+##    symbol date       return_annual
+##    &lt;chr&gt;  &lt;date&gt;             &lt;dbl&gt;
+##  1 DBA    2015-12-31       -0.0636
+##  2 DBA    2016-12-30       -0.0311
+##  3 DBA    2017-12-29       -0.0606
+##  4 DBA    2018-12-31       -0.0970
+##  5 DBA    2019-12-31       -0.0224
+##  6 DBA    2020-12-31       -0.0254
+##  7 DBA    2021-12-31        0.224 
+##  8 DBA    2022-04-01        0.101 
+##  9 WEAT   2015-12-31       -0.113 
+## 10 WEAT   2016-12-30       -0.247 
+## # … with 545 more rows
+
+ticker_other_monthly_return &lt;- ticker_other_df %&gt;%
+  group_by(symbol) %&gt;%
+  tq_transmute(select = close, 
+                 mutate_fun = periodReturn, 
+                 period = &quot;monthly&quot;, 
+                 type = &quot;arithmetic&quot;, 
+               col_rename = &#39;return_monthly&#39;)
+
+ticker_other_monthly_return
+## # A tibble: 5,568 × 3
+## # Groups:   symbol [78]
+##    symbol date       return_monthly
+##    &lt;chr&gt;  &lt;date&gt;              &lt;dbl&gt;
+##  1 DBA    2015-06-30        0.0609 
+##  2 DBA    2015-07-31       -0.0809 
+##  3 DBA    2015-08-31       -0.0270 
+##  4 DBA    2015-09-30        0      
+##  5 DBA    2015-10-30        0.0192 
+##  6 DBA    2015-11-30       -0.0362 
+##  7 DBA    2015-12-31        0.00488
+##  8 DBA    2016-01-29       -0.0301 
+##  9 DBA    2016-02-29       -0.00100
+## 10 DBA    2016-03-31        0.0315 
+## # … with 5,558 more rows</code></pre>
+<pre class="r"><code>
+spy_df &lt;- dbReadTable(con, (&quot;FactTickerPriceDaily&quot;)) %&gt;% 
+  distinct() %&gt;%
+  filter(symbol == &#39;SPY&#39;) %&gt;%
+  transmute(symbol, 
+            date = ymd(as.Date(date), tz = &#39;America/New_york&#39;),
+            open = round(as.numeric(open),2),
+            close = round(as.numeric(close),2),
+            high = round(as.numeric(high),2),
+            low = round(as.numeric(low),2),
+            volume = as.numeric(volume)) %&gt;%
+  arrange(symbol, date)</code></pre>
+<pre class="r"><code>
+spy_annual_return &lt;- spy_df %&gt;%
+  group_by(symbol) %&gt;%
+  tq_transmute(select = close, 
+                 mutate_fun = periodReturn, 
+                 period = &quot;yearly&quot;, 
+                 type = &quot;arithmetic&quot;, 
+               col_rename = &#39;spy_return_annual&#39;)
+
+
+spy_annual_return
+## # A tibble: 5 × 3
+## # Groups:   symbol [1]
+##   symbol date                spy_return_annual
+##   &lt;chr&gt;  &lt;dttm&gt;                          &lt;dbl&gt;
+## 1 SPY    2018-12-31 00:00:00           -0.0701
+## 2 SPY    2019-12-31 00:00:00            0.288 
+## 3 SPY    2020-12-31 00:00:00            0.162 
+## 4 SPY    2021-12-31 00:00:00            0.270 
+## 5 SPY    2022-04-27 00:00:00           -0.121
+
+spy_monthly_return &lt;- spy_df %&gt;%
+  group_by(symbol) %&gt;%
+  tq_transmute(select = close, 
+                 mutate_fun = periodReturn, 
+                 period = &quot;monthly&quot;, 
+                 type = &quot;arithmetic&quot;, 
+               col_rename = &#39;spy_return_monthly&#39;)
+
+spy_monthly_return
+## # A tibble: 52 × 3
+## # Groups:   symbol [1]
+##    symbol date                spy_return_monthly
+##    &lt;chr&gt;  &lt;dttm&gt;                           &lt;dbl&gt;
+##  1 SPY    2018-01-31 00:00:00            0.0489 
+##  2 SPY    2018-02-28 00:00:00           -0.0364 
+##  3 SPY    2018-03-29 00:00:00           -0.0313 
+##  4 SPY    2018-04-30 00:00:00            0.00517
+##  5 SPY    2018-05-31 00:00:00            0.0243 
+##  6 SPY    2018-06-29 00:00:00            0.00125
+##  7 SPY    2018-07-31 00:00:00            0.0370 
+##  8 SPY    2018-08-31 00:00:00            0.0319 
+##  9 SPY    2018-09-28 00:00:00            0.00141
+## 10 SPY    2018-10-31 00:00:00           -0.0691 
+## # … with 42 more rows</code></pre>
+<pre class="r"><code>
+ticker_other_stat &lt;- ticker_other_annual_return %&gt;%
+  summarise(return_annual_mean = mean(return_annual), 
+         return_annual_sd = sd(return_annual), 
+         return_annual_median = median(return_annual)) %&gt;%
+  ungroup()</code></pre>
+<pre class="r"><code>
+ticker_pick_a &lt;- ticker_other_annual_return %&gt;%
+  summarise(return_annual_median = median(return_annual)) %&gt;%
+  filter(return_annual_median &gt;0) %&gt;%
+  pull(symbol) </code></pre>
+<pre class="r"><code>
+ticker_other_annual_return %&gt;% 
+  inner_join(ticker_other_stat, by = &#39;symbol&#39;) %&gt;%
+  mutate(return_annual = case_when(return_annual &gt; 3*return_annual_sd ~ 3*return_annual_sd,
+                                   return_annual &lt; -3*return_annual_sd ~  -3*return_annual_sd,
+                                   TRUE ~ return_annual)) %&gt;%
+  inner_join(symbol_load %&gt;% select(symbol, company_name, rowid, row_group), 
+            by = &#39;symbol&#39;) %&gt;%
+  mutate(symbol_name = paste0(symbol, &#39;_&#39;, company_name)) %&gt;%
+  filter(symbol %in% ticker_pick_a &amp; row_group == 2) %&gt;%
+  
+  ggplot(aes(x=fct_reorder(symbol_name, return_annual, .fun = median), y = return_annual)) +
+  geom_boxplot() +
+  # coord_flip() +
+  scale_y_continuous(labels = scales::percent) +
+  geom_hline(yintercept = 0, linetype = 2, colour = &quot;red&quot;) +
+  # facet_grid(rows = vars(row_group)) +
+  theme_classic() +
+  theme(axis.text.x = element_text(size = 7, angle = 30, vjust = 0.5, hjust=0.5))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="960" /></p>
+<pre class="r"><code>
+
+for (n in c(1:5)){
+  g2 &lt;-
+  ticker_other_annual_return %&gt;% 
+    inner_join(ticker_other_stat, by = &#39;symbol&#39;) %&gt;%
+    mutate(return_annual = case_when(return_annual &gt; 2*return_annual_sd ~ 2*return_annual_sd,
+                                     return_annual &lt; -2*return_annual_sd ~  -2*return_annual_sd, 
+                                     TRUE ~ return_annual)) %&gt;%
+    inner_join(symbol_load %&gt;% select(symbol, company_name, rowid, row_group), 
+              by = &#39;symbol&#39;) %&gt;%
+    mutate(symbol_name = paste0(symbol, &#39;_&#39;, company_name)) %&gt;%
+    
+    ggplot(aes(x = return_annual)) +
+    geom_density() +
+    geom_vline(xintercept = 0, linetype = 2, color = 2) +
+    facet_wrap_paginate(~ symbol_name, ncol = 4, nrow = 4, page = n, scales = &#39;free_y&#39;) +
+    theme_classic() +
+    theme(strip.text = element_text(size = 8, hjust = 0.030))
+  
+  print(g2)
+}</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" width="960" /><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-2.png" width="960" /><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-3.png" width="960" /><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-4.png" width="960" /><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-5.png" width="960" /></p>
+<pre class="r"><code>
+ticker_other_annual_return %&gt;% 
+    inner_join(ticker_other_stat, by = &#39;symbol&#39;) %&gt;%
+    mutate(return_annual = case_when(return_annual &gt; 2*return_annual_sd ~ 2*return_annual_sd,
+                                     return_annual &lt; -2*return_annual_sd ~  -2*return_annual_sd, 
+                                     TRUE ~ return_annual)) %&gt;%
+    inner_join(symbol_load %&gt;% select(symbol, company_name, rowid, row_group), 
+              by = &#39;symbol&#39;) %&gt;%
+    mutate(symbol_name = paste0(symbol, &#39;_&#39;, company_name)) %&gt;% 
+  ggplot(aes(x=fct_reorder(symbol, return_annual, .fun = median), y = return_annual)) +
+  geom_boxplot() +
+  geom_hline(yintercept = mean(spy_annual_return$spy_return_annual), linetype = 2, color = &#39;red&#39;) +
+  scale_y_continuous(labels = scales::percent)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-10-1.png" width="960" />
+market cap, mean annual return, median annual return, dividend</p>
+<p>MOO, JJA, XLE, DBE</p>
+<pre class="r"><code>
+ticker_other_stat %&gt;% 
+  filter(symbol %in% c(&#39;MOO&#39;, &#39;JJA&#39;, &#39;XLE&#39;, &#39;DBE&#39;)) %&gt;%
+  # filter(return_annual_mean&gt;0 | return_annual_median &gt;0) %&gt;%
+  # filter(row_group == 0) %&gt;%
+  
+  select(-return_annual_sd) %&gt;%
+  inner_join(symbol_load %&gt;% 
+               transmute(symbol, company_name, a_market_cap = market_cap, 
+                         b_last_annual_dividend = last_annual_dividend, 
+                         rowid, 
+                         row_group), 
+            by = &#39;symbol&#39;) %&gt;%
+  mutate(symbol_name = paste0(symbol, &#39;_&#39;, company_name)) %&gt;%
+  pivot_longer(cols = c(starts_with(&#39;return&#39;), &#39;a_market_cap&#39;,&#39;b_last_annual_dividend&#39;), names_to = &#39;item&#39;) %&gt;%
+  
+  group_by(item) %&gt;%
+  arrange(desc(value)) %&gt;%
+  ungroup() %&gt;%
+  mutate(n = row_number(), 
+         item = as.factor(item)) %&gt;%
+  mutate(symbol_name = reorder_within(symbol_name, by = n, within = item)) %&gt;%
+  
+  ggplot(aes(x= fct_reorder(symbol_name, desc(n)), y = value)) +
+  geom_bar(stat = &#39;identity&#39;) +
+  scale_y_continuous(labels = scales::label_number_si(accuracy = 0.01)) +
+  coord_flip() +
+  scale_x_reordered() +
+  facet_wrap(~item, scales = &#39;free&#39;) +
+  
+  labs(y = NULL,
+         x = &#39;symbol_name&#39;,
+         title = &quot;over 5 years&quot;)
+## Warning: `label_number_si()` was deprecated in scales 1.2.0.
+## Please use the `scale_cut` argument of `label_number()` instead.
+## This warning is displayed once every 8 hours.
+## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was generated.</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<pre class="r"><code>
+symbol_load %&gt;% 
+  filter(!is.na(market_cap)) %&gt;%
+  arrange(desc(market_cap)) %&gt;%
+  
+  head(20) %&gt;%
+  ggplot(aes(x=symbol_name %&gt;% fct_reorder(market_cap), y=market_cap)) + 
+  geom_bar(stat = &#39;identity&#39;) +
+  scale_y_continuous(labels = scales::label_number_si()) +
+  coord_flip() +
+  theme_bw()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<pre class="r"><code>
+ticker_other_annual_return %&gt;% 
+    inner_join(ticker_other_stat, by = &#39;symbol&#39;) %&gt;%
+    mutate(return_annual = case_when(return_annual &gt; 2*return_annual_sd ~ 2*return_annual_sd,
+                                     return_annual &lt; -2*return_annual_sd ~  -2*return_annual_sd, 
+                                     TRUE ~ return_annual)) %&gt;%
+  group_by(symbol) %&gt;%
+  summarise(annual_avg = mean(return_annual), 
+            annual_median = median(return_annual)) %&gt;%
+  ungroup() %&gt;%
+  inner_join(symbol_load %&gt;% select(symbol, symbol_name, rowid, row_group), 
+              by = &#39;symbol&#39;) %&gt;%
+  
+  arrange(desc(annual_avg)) %&gt;%
+  head(20) %&gt;%
+  ggplot(aes(x=symbol_name %&gt;% fct_reorder(annual_avg), y=annual_avg)) + 
+  geom_bar(stat = &#39;identity&#39;) +
+  geom_hline(yintercept = mean(spy_annual_return$spy_return_annual), linetype = 2, color = &#39;red&#39;) +
+  scale_y_continuous(labels = scales::label_percent()) +
+  coord_flip() +
+  theme_bw()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+<pre class="r"><code>
+ticker_other_annual_return %&gt;% 
+    inner_join(ticker_other_stat, by = &#39;symbol&#39;) %&gt;%
+    mutate(return_annual = case_when(return_annual &gt; 2*return_annual_sd ~ 2*return_annual_sd,
+                                     return_annual &lt; -2*return_annual_sd ~  -2*return_annual_sd, 
+                                     TRUE ~ return_annual)) %&gt;%
+  group_by(symbol) %&gt;%
+  summarise(annual_avg = mean(return_annual), 
+            annual_median = median(return_annual)) %&gt;%
+  ungroup() %&gt;%
+  inner_join(symbol_load %&gt;% select(symbol, symbol_name, rowid, row_group), 
+              by = &#39;symbol&#39;) %&gt;%
+  
+  arrange(desc(annual_median)) %&gt;%
+  head(20) %&gt;%
+  ggplot(aes(x=symbol_name %&gt;% fct_reorder(annual_median), y=annual_median)) + 
+  geom_bar(stat = &#39;identity&#39;) +
+  geom_hline(yintercept = median(spy_annual_return$spy_return_annual), linetype = 2, color = &#39;red&#39;) +
+  scale_y_continuous(labels = scales::label_percent()) +
+  coord_flip() +
+  theme_bw()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+<pre class="r"><code>
+for (n in c(1:5)){
+g3 &lt;-
+ticker_other_annual_return %&gt;% 
+    inner_join(ticker_other_stat, by = &#39;symbol&#39;) %&gt;%
+    mutate(return_annual = case_when(return_annual &gt; 2*return_annual_sd ~ 2*return_annual_sd,
+                                     return_annual &lt; -2*return_annual_sd ~  -2*return_annual_sd, 
+                                     TRUE ~ return_annual)) %&gt;%
+  left_join(spy_annual_return %&gt;% ungroup() %&gt;% select(-symbol), by = &#39;date&#39;) %&gt;%
+    inner_join(symbol_load %&gt;% select(symbol, company_name, rowid, row_group), 
+              by = &#39;symbol&#39;) %&gt;%
+    mutate(symbol_name = paste0(symbol, &#39;_&#39;, company_name)) %&gt;%
+  
+  ggplot() +
+  # geom_bar(stat = &#39;identity&#39;) +
+  geom_line(aes(x = date, y = return_annual)) +
+  geom_line(aes(x= date, y = spy_return_annual), color = &#39;orange&#39;) +
+  scale_y_continuous(labels = scales::percent) +
+  facet_wrap_paginate(~ symbol_name, ncol = 4, nrow = 4, page = n, scales = &#39;free_y&#39;) +
+  theme_classic() +
+  theme(strip.text = element_text(size = 8, hjust = 0.030))
+
+print(g3)
+}
+## Warning: Removed 1 row(s) containing missing values (geom_path).</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-16-1.png" width="960" /></p>
+<pre><code>## Warning: Removed 1 row(s) containing missing values (geom_path).</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-16-2.png" width="960" /></p>
+<pre><code>## Warning: Removed 1 row(s) containing missing values (geom_path).</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-16-3.png" width="960" /></p>
+<pre><code>## Warning: Removed 1 row(s) containing missing values (geom_path).</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-16-4.png" width="960" /></p>
+<pre><code>## Warning: Removed 1 row(s) containing missing values (geom_path).</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-16-5.png" width="960" /></p>
+</div>
