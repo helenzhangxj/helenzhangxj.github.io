@@ -9,3 +9,23 @@ tags:
   - general
 ---
 
+```{r}
+
+# Package names
+
+library_list <- c("dplyr","tidyr")
+
+# Install packages not yet installed
+
+installed_packages <- library_list %in% rownames(installed.packages())
+
+if (any(installed_packages == FALSE)) {
+  install.packages(library_list[!installed_packages])
+}
+
+# Packages loading
+invisible(lapply(library_list, library, character.only = TRUE))
+
+```
+
+
