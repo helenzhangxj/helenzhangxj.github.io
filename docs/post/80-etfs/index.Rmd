@@ -294,12 +294,6 @@ ticker_other_stat %>%
 
 ```{r}
 
-```
-
-
-
-```{r}
-
 symbol_load %>% 
   filter(!is.na(market_cap)) %>%
   arrange(desc(market_cap)) %>%
@@ -368,27 +362,28 @@ ticker_other_annual_return %>%
 ```{r fig.width=10}
 
 for (n in c(1:5)){
-g3 <-
-ticker_other_annual_return %>% 
-    inner_join(ticker_other_stat, by = 'symbol') %>%
-    mutate(return_annual = case_when(return_annual > 2*return_annual_sd ~ 2*return_annual_sd,
-                                     return_annual < -2*return_annual_sd ~  -2*return_annual_sd, 
-                                     TRUE ~ return_annual)) %>%
-  left_join(spy_annual_return %>% ungroup() %>% select(-symbol), by = 'date') %>%
-    inner_join(symbol_load %>% select(symbol, company_name, rowid, row_group), 
-              by = 'symbol') %>%
-    mutate(symbol_name = paste0(symbol, '_', company_name)) %>%
+  g3 <-
+  ticker_other_annual_return %>% 
+      inner_join(ticker_other_stat, by = 'symbol') %>%
+      mutate(return_annual = case_when(return_annual > 2*return_annual_sd ~ 2*return_annual_sd,
+                                       return_annual < -2*return_annual_sd ~  -2*return_annual_sd, 
+                                       TRUE ~ return_annual)) %>%
+    left_join(spy_annual_return %>% ungroup() %>% select(-symbol), by = 'date') %>%
+      inner_join(symbol_load %>% select(symbol, company_name, rowid, row_group), 
+                by = 'symbol') %>%
+      mutate(symbol_name = paste0(symbol, '_', company_name)) %>%
+    
+    ggplot() +
+    # geom_bar(stat = 'identity') +
+    geom_line(aes(x = date, y = return_annual)) +
+    geom_line(aes(x= date, y = spy_return_annual), color = 'orange') +
+    scale_y_continuous(labels = scales::percent) +
+    facet_wrap_paginate(~ symbol_name, ncol = 4, nrow = 4, page = n, scales = 'free_y') +
+    theme_classic() +
+    theme(strip.text = element_text(size = 8, hjust = 0.030))
   
-  ggplot() +
-  # geom_bar(stat = 'identity') +
-  geom_line(aes(x = date, y = return_annual)) +
-  geom_line(aes(x= date, y = spy_return_annual), color = 'orange') +
-  scale_y_continuous(labels = scales::percent) +
-  facet_wrap_paginate(~ symbol_name, ncol = 4, nrow = 4, page = n, scales = 'free_y') +
-  theme_classic() +
-  theme(strip.text = element_text(size = 8, hjust = 0.030))
+  print(g3)
 
-print(g3)
 }
 
 ```

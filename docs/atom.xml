@@ -4,7 +4,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
     <title type="text">Helen Zhang</title>
     <subtitle type="html">MemE is a powerful and highly customizable GoHugo theme for personal blogs.</subtitle>
-    <updated>2022-01-17T16:01:45&#43;13:00</updated>
+    <updated>2022-05-17T16:01:25&#43;12:00</updated>
     <id>/</id>
     <link rel="alternate" type="text/html" href="/" />
     <link rel="self" type="application/atom&#43;xml" href="/atom.xml" />
@@ -20,7 +20,7 @@
             <title type="text">Deploy blogdown in github page</title>
             <link rel="alternate" type="text/html" href="/post/deploy-blogdown-in-github-page/" />
             <id>/post/deploy-blogdown-in-github-page/</id>
-            <updated>2022-01-17T15:46:10&#43;13:00</updated>
+            <updated>2022-01-18T08:20:17&#43;13:00</updated>
             <published>2022-01-17T00:00:00&#43;00:00</published>
             <author>
                     <name>Helen Zhang</name>
@@ -76,7 +76,7 @@ add publishDir = ‘docs’&lt;/p&gt;
             <title type="text">Hello R Markdown</title>
             <link rel="alternate" type="text/html" href="/post/2020-12-01-r-rmarkdown/" />
             <id>/post/2020-12-01-r-rmarkdown/</id>
-            <updated>2022-01-17T14:52:48&#43;13:00</updated>
+            <updated>2022-01-18T08:20:17&#43;13:00</updated>
             <published>2020-12-01T21:13:14-05:00</published>
             <author>
                     <name>Helen Zhang</name>
