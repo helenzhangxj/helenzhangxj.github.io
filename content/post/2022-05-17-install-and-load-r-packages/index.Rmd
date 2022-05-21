@@ -27,5 +27,3 @@ if (any(installed_packages == FALSE)) {
 invisible(lapply(library_list, library, character.only = TRUE))
 
 ```
-
-
