@@ -23,10 +23,55 @@
         
             <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en)</copyright>
         
-        <lastBuildDate>Tue, 17 May 2022 16:09:11 &#43;1200</lastBuildDate>
+        <lastBuildDate>Sat, 21 May 2022 20:04:23 &#43;1200</lastBuildDate>
         
             <atom:link rel="self" type="application/rss&#43;xml" href="/rss.xml" />
         
+        
+            <item>
+                <title>Install and load R packages</title>
+                <link>/post/install-and-load-r-packages/</link>
+                <guid isPermaLink="true">/post/install-and-load-r-packages/</guid>
+                <pubDate>Tue, 17 May 2022 00:00:00 &#43;0000</pubDate>
+                
+                    <author>helen.zhangxj@gmail.com (Helen Zhang)</author>
+                
+                <copyright>[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en)</copyright>
+                
+                    <description>
+
+
+</description>
+                
+                
+                
+                
+                
+                    
+                        
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="/categories/r/">R</category>
+                                
+                            
+                        
+                    
+                        
+                            
+                                
+                                
+                                
+                                    <category domain="/tags/general/">general</category>
+                                
+                            
+                        
+                    
+                
+            </item>
         
             <item>
                 <title>Deploy blogdown in github page</title>
